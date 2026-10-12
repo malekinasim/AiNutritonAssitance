@@ -11,8 +11,11 @@ public class HealthAssistantMain {
         HealthAssistant assistant = new HealthAssistant(new AiChatAPI(), new EmbeddingAPI());
 
         System.out.println("Indexing health documents...");
-        assistant.index("/health/health_docs.txt");
-        System.out.println("Ready. " + assistant.documentCount() + " documents indexed. Type 'exit' to quit.");
+        assistant.indexDocument("/health/health_docs.txt");
+        assistant.loadSkills("/health/skills");
+        System.out.println("Ready. " + assistant.documentCount() + " documents, "
+            + assistant.skillCount() + " skills. Type 'exit' to quit.");
+
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.print("You: ");

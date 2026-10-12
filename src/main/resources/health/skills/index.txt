@@ -1,0 +1,4 @@
+# one skill name per line (folder name under skills/)
+intake-questions
+pregnancy-nutrition
+drug-food-check
