@@ -9,13 +9,13 @@ import com.nasim.ai.nutrion.skills.Skill;
 import com.nasim.ai.nutrion.skills.SkillLoader;
 import com.nasim.ai.nutrion.skills.SkillRouter;
 import com.nasim.ai.nutrion.skills.SkillVectorEntry;
+import com.nasim.ai.nutrion.tools.FunctionDefinition;
+import com.nasim.ai.nutrion.tools.ToolDefinition;
+import com.nasim.ai.nutrion.tools.ToolLoader;
 import com.nasim.ai.nutrion.util.SearchResult;
 import com.nasim.ai.nutrion.util.VectorStore;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,6 +43,7 @@ public class HealthAssistant {
     private final EmbeddingAPI embeddingApi;
     private final VectorStore<DocumentChunkVectorEntry> documentVectorStore;
     private Map<String, Skill> skills = Map.of();
+    private Map<String, ToolDefinition> tools = Map.of();
     private SkillRouter router;
     private final Map<String, Skill> activeSkills = new LinkedHashMap<>();
 
@@ -66,6 +67,10 @@ public class HealthAssistant {
         this.router=new SkillRouter(embeddingApi,skills,SKILL_THRESHOLD);
 
     }
+
+    public void loadTools() {
+        this.tools= ToolLoader.loadToolsList();
+    }
     public int documentCount() {
         return documentVectorStore.size();
     }
@@ -88,25 +93,41 @@ public class HealthAssistant {
                 .collect(Collectors.joining("\n"));
         String augmented = "SOURCES:\n" + sources + "\n\nQUESTION: " + question;
         String answer = "";
+        List<ToolDefinition> activeTools=new ArrayList<>();
         for (int round = 0; round <= MAX_SKILL_ROUNDS; round++) {
 
             List<Message> request = new ArrayList<>();
             request.add(Message.getMessage(ChatRole.SYSTEM, buildSystemPrompt()));
             request.addAll(history);
-            request.add(Message.getMessage(ChatRole.USER, augmented));
-            answer = chatApi.chat(request);
+            List<Message> toolMessages=activeTools.stream().map(
+                    toolDefinition ->
+                           new Message(ChatRole.TOOL, toolDefinition.getFunctionDefinition().execute(
 
-            boolean loadedNew = false;
+                           ) )
+            )
+            request.add(Message.getMessage(ChatRole.USER, augmented));
+            Map<String, String> response = chatApi.chat(request, (List<ToolDefinition>) tools.values());
+
+            answer=response.get("answer");
+
+             String requestedTools=response.get("tools");
+             if(requestedTools!=null && !requestedTools.isEmpty()){
+                String[] requestedToolNames= requestedTools.split(",");
+                activeTools=  Arrays.stream(requestedToolNames).map(name->
+                            tools.get(name)
+                ).filter(Objects::nonNull).toList();
+             }
+            boolean loadedNewSkill = false;
             Matcher m = LOAD_SKILL.matcher(answer);
             while (m.find()) {
                 Skill requested = skills.get(m.group(1));
                 if (requested != null) {
-                    loadedNew |= activate(requested,"requested by model");
+                    loadedNewSkill |= activate(requested,"requested by model");
                 } else {
                     System.out.println("  [unknown skill requested: " + m.group(1) + "]");
                 }
             }
-            if (!loadedNew) break;
+            if (!loadedNewSkill) break;
         }
 
         answer = LOAD_SKILL.matcher(answer).replaceAll("").strip();

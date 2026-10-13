@@ -2,13 +2,13 @@ package com.nasim.ai.nutrion.tools;
 
 import java.util.Map;
 
-public record ToolDefinition<I,R>(ToolType type, FunctionDefinition<I,R> functionDefinition) {
-
-    public Map<String, Object> getToolDefinitionForModel() {
-
+public interface ToolDefinition<F extends FunctionDefinition<I,R>,I,R> {
+    ToolType getType();
+    F getFunctionDefinition();
+    default Map<String, Object> getToolDefinitionForModel() {
         return Map.of(
-                "type",this.type() ,
-                "function",this.getToolDefinitionForModel()
+                "type",this.getType(),
+                "function",this.getFunctionDefinition()
         );
     }
 }

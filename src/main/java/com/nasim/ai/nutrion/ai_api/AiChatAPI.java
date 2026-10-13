@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nasim.ai.nutrion.tools.FunctionDefinition;
+import com.nasim.ai.nutrion.tools.ToolDefinition;
 
+import javax.tools.Tool;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -24,15 +26,16 @@ public class AiChatAPI {
         this.baseUrl = System.getenv().getOrDefault("AI_BASE_URL", "http://localhost:11434");
         this.model = System.getenv().getOrDefault("AI_MODEL", "qwen2.5:3b");
     }
-    public String chat(List<Message> messages) throws Exception {
+    public Map<String,String> chat(List<Message> messages,List<ToolDefinition> tools) throws Exception {
         Map<String, Object>  requestBody = Map.of(
                 "model",this.model,
                 "messages", messages,
-                 "stream", false
+                 "stream", false,
+                "tools",tools.stream().map( ToolDefinition::getToolDefinitionForModel).toList()
         );
          return callPrompt(requestBody);
     }
-    public String callPrompt(Map<String, Object>  requestBody) throws Exception {
+    public Map<String,String> callPrompt(Map<String, Object>  requestBody) throws Exception {
         try {
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -47,7 +50,8 @@ public class AiChatAPI {
             if (response.statusCode() != 200) {
                 return  response.body();
             }
-            return extractResponse(response.body());
+            return Map.of("answer",extractResponse(response.body()),"tools"
+                    extractTools(response.body()));
         } catch (IOException e) {
             e.printStackTrace();
             throw new Exception("Could not connect to the AI model: " + e.getMessage());
@@ -60,5 +64,9 @@ public class AiChatAPI {
     private String extractResponse(String body) throws JsonProcessingException {
         JsonNode json = mapper.readTree(body);
         return json.path("message").path("content").asText();
+    }
+    private String extractTools(String body) throws JsonProcessingException {
+        JsonNode json = mapper.readTree(body);
+        return json.path("message").path("tools").asText();
     }
 }
