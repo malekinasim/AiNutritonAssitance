@@ -1,7 +1,7 @@
 package com.nasim.ai.nutrion.health;
 
-import com.nasim.ai.nutrion.ai.AiChatAPI;
-import com.nasim.ai.nutrion.ai.EmbeddingAPI;
+import com.nasim.ai.nutrion.ai_api.AiChatAPI;
+import com.nasim.ai.nutrion.ai_api.EmbeddingAPI;
 
 import java.util.Scanner;
 

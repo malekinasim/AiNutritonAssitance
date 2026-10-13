@@ -1,4 +1,4 @@
-package com.nasim.ai.nutrion.ai;
+package com.nasim.ai.nutrion.ai_api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,7 +12,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SequencedCollection;
 
 public class EmbeddingAPI {
 

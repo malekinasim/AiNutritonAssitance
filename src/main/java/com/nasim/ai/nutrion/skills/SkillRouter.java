@@ -1,6 +1,6 @@
 package com.nasim.ai.nutrion.skills;
 
-import com.nasim.ai.nutrion.ai.EmbeddingAPI;
+import com.nasim.ai.nutrion.ai_api.EmbeddingAPI;
 import com.nasim.ai.nutrion.util.SearchResult;
 import com.nasim.ai.nutrion.util.VectorStore;
 

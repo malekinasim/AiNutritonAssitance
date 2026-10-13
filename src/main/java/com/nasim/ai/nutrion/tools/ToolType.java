@@ -1,12 +1,12 @@
-package com.nasim.ai.nutrion.ai;
+package com.nasim.ai.nutrion.tools;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum ChatRole {
-    SYSTEM, USER, ASSISTANT;
-
+public enum ToolType {
+    FUNCTION,RETRIEVAL,CODE_INTERPRETER;
     @JsonValue
     public String toJson() {
         return name().toLowerCase();
     }
+
 }

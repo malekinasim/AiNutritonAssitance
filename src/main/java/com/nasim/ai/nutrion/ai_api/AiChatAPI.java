@@ -1,8 +1,9 @@
-package com.nasim.ai.nutrion.ai;
+package com.nasim.ai.nutrion.ai_api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nasim.ai.nutrion.tools.FunctionDefinition;
 
 import java.io.IOException;
 import java.net.URI;
@@ -24,7 +25,7 @@ public class AiChatAPI {
         this.model = System.getenv().getOrDefault("AI_MODEL", "qwen2.5:3b");
 
     }
-    public String chat(List<Message> messages) throws Exception {
+    public String chat(List<Message> messages, List<FunctionDefinition> tools) throws Exception {
         Map<String, Object>  requestBody = Map.of(
                 "model",this.model,
                 "messages", messages,

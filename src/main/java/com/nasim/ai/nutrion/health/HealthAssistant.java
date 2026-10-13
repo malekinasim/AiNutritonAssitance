@@ -1,9 +1,9 @@
 package com.nasim.ai.nutrion.health;
 
-import com.nasim.ai.nutrion.ai.AiChatAPI;
-import com.nasim.ai.nutrion.ai.ChatRole;
-import com.nasim.ai.nutrion.ai.EmbeddingAPI;
-import com.nasim.ai.nutrion.ai.Message;
+import com.nasim.ai.nutrion.ai_api.AiChatAPI;
+import com.nasim.ai.nutrion.ai_api.ChatRole;
+import com.nasim.ai.nutrion.ai_api.EmbeddingAPI;
+import com.nasim.ai.nutrion.ai_api.Message;
 import com.nasim.ai.nutrion.rag.*;
 import com.nasim.ai.nutrion.skills.Skill;
 import com.nasim.ai.nutrion.skills.SkillLoader;
