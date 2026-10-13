@@ -12,6 +12,7 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SequencedCollection;
 
 public class EmbeddingAPI {
 
@@ -26,10 +27,12 @@ public class EmbeddingAPI {
         this.baseUrl = System.getenv().getOrDefault("AI_BASE_URL", "http://localhost:11434");
         this.model = System.getenv().getOrDefault("EMBED_MODEL", "nomic-embed-text");
     }
-
     public double[] embed(String text) {
+       return this.embedAll(List.of(text)).getFirst();
+    }
+    public  List<double[]> embedAll(List<String> texts) {
         try {
-            String json = mapper.writeValueAsString(new EmbedRequest(model, List.of(text)));
+            String json = mapper.writeValueAsString(new EmbedRequest(model, texts));
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(baseUrl + "/api/embed"))
@@ -45,7 +48,7 @@ public class EmbeddingAPI {
                 throw new IllegalStateException("Embedding error " + response.statusCode() + ": " + response.body());
             }
 
-           return extractResponse(response.body()).getFirst();
+           return extractResponse(response.body());
 
         } catch (IOException e) {
             throw new IllegalStateException("Could not reach the embedding model: " + e.getMessage(), e);

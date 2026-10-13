@@ -1,10 +1,6 @@
 package com.nasim.ai.nutrion.skills;
 
-import com.nasim.ai.nutrion.rag.DocumentLoader;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import com.nasim.ai.nutrion.util.Utils;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -13,11 +9,11 @@ public class SkillLoader {
     public static Map<String, Skill> loadFromClasspath(String baseDir) {
         Map<String, Skill> skills = new LinkedHashMap<>();
 
-        for (String line : read(baseDir + "/index.txt").split("\n")) {
+        for (String line : Utils.read(baseDir + "/index.txt").split("\n")) {
             String name = line.strip();
             if (name.isEmpty() || name.startsWith("#")) continue;
 
-            Skill skill = parse(read(baseDir + "/" + name + "/SKILL.md"));
+            Skill skill = parse(Utils.read(baseDir + "/" + name + "/SKILL.md"));
             skills.put(skill.name(), skill);
         }
         return skills;
@@ -49,14 +45,5 @@ public class SkillLoader {
         String instructions = content.substring(end + 4).strip();
         return new Skill(name, description, instructions);
     }
-    private static String read(String path){
-        try (InputStream in = DocumentLoader.class.getResourceAsStream(path)) {
-            if (in == null) {
-                throw new IllegalStateException("File not found on classpath: " + path);
-            }
-            return new String(in.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not read " + path, e);
-        }
-    }
+
 }

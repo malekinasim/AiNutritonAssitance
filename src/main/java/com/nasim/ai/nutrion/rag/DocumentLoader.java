@@ -1,26 +1,17 @@
 package com.nasim.ai.nutrion.rag;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import com.nasim.ai.nutrion.util.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DocumentLoader {
 
-    public static List<Chunk> loadFromClasspath(String path) {
-        try (InputStream in = DocumentLoader.class.getResourceAsStream(path)) {
-            if (in == null) {
-                throw new IllegalStateException("File not found on classpath: " + path);
-            }
-            return parse(new String(in.readAllBytes(),StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            throw new IllegalStateException("Could not read " + path, e);
-        }
+    public static List<DocumentChunk> loadFromClasspath(String path) {
+        return parse(Utils.read(path));
     }
 
-    static List<Chunk> parse(String content) {
-        List<Chunk> chunks = new ArrayList<>();
+    static List<DocumentChunk> parse(String content) {
+        List<DocumentChunk> documentChunks = new ArrayList<>();
 
         for (String block : content.replace("\r\n", "\n").split("\n\\s*\n")) {
             block = block.strip();
@@ -31,8 +22,8 @@ public class DocumentLoader {
 
             String title = block.substring(1, newline).strip();
             String text = block.substring(newline + 1).strip().replace("\n", " ");
-            chunks.add(new Chunk(title, text));
+            documentChunks.add(new DocumentChunk(title, text));
         }
-        return chunks;
+        return documentChunks;
     }
 }

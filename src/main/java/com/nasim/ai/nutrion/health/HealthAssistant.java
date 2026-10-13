@@ -8,6 +8,9 @@ import com.nasim.ai.nutrion.rag.*;
 import com.nasim.ai.nutrion.skills.Skill;
 import com.nasim.ai.nutrion.skills.SkillLoader;
 import com.nasim.ai.nutrion.skills.SkillRouter;
+import com.nasim.ai.nutrion.skills.SkillVector;
+import com.nasim.ai.nutrion.util.SearchResult;
+import com.nasim.ai.nutrion.util.VectorStore;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,43 +41,52 @@ public class HealthAssistant {
     private final List<Message> history = new ArrayList<>();
     private final AiChatAPI chatApi;
     private final EmbeddingAPI embeddingApi;
-    private final VectorStore store = new VectorStore();
-
+    private final VectorStore<DocumentChunkVector> documentVectorStore;
     private Map<String, Skill> skills = Map.of();
-
     private SkillRouter router;
     private final Map<String, Skill> activeSkills = new LinkedHashMap<>();
 
-    public HealthAssistant(AiChatAPI chatApi, EmbeddingAPI embeddingApi) {
+    public HealthAssistant(AiChatAPI chatApi, EmbeddingAPI embeddingApi,int topK) {
         this.chatApi = chatApi;
         this.embeddingApi = embeddingApi;
+        var type=VectorStore.Type.TOP;
+        type.setValue((double) topK);
+       this.documentVectorStore= new VectorStore<>(type);
     }
 
     public void indexDocument(String ... documentsPaths) {
         for(String documentsPath :documentsPaths) {
-            List<Chunk> chunks = DocumentLoader.loadFromClasspath(documentsPath);
-            chunks.forEach(c->{
+            List<DocumentChunk> documentChunks = DocumentLoader.loadFromClasspath(documentsPath);
+            documentChunks.forEach(c->{
                         double[] vector = embeddingApi.embed(c.title()+":"+c.text());
-                        store.add(new Document(c, vector));
+                        documentVectorStore.add(new DocumentChunkVector( vector,c));
                     });
         }
     }
     public void loadSkills(String baseDir) {
       this.skills= SkillLoader.loadFromClasspath(baseDir);
+        this.router=new SkillRouter(embeddingApi,skills,SKILL_THRESHOLD);
 
     }
     public int documentCount() {
-        return store.size();
+        return documentVectorStore.size();
     }
 
     public int skillCount() {return skills.size(); }
 
     public String ask(String question) {
-        List<SearchResult> results = store.search(embeddingApi.embed(question), TOP_K);
+        //Skill Matcher
+        if (router != null) {
+            for (SearchResult<SkillVector> m : router.match(question)) {
+                activate(m.item().getSkill(), String.format("router, score %.3f", m.score()));
+            }
+        }
+        //RAG
+        List<SearchResult<DocumentChunkVector>> results = documentVectorStore.search(embeddingApi.embed(question));
         printRetrieved(results);
 
         String sources = results.stream()
-                .map(r -> "[" + r.document().chunk().title() + "] " + r.document().chunk().text())
+                .map(r -> "[" + r.item().getChunk().title() + "] " + r.item().getChunk().text())
                 .collect(Collectors.joining("\n"));
         String augmented = "SOURCES:\n" + sources + "\n\nQUESTION: " + question;
         String answer = "";
@@ -91,7 +103,7 @@ public class HealthAssistant {
             while (m.find()) {
                 Skill requested = skills.get(m.group(1));
                 if (requested != null) {
-                    loadedNew |= activate(requested);
+                    loadedNew |= activate(requested,"requested by model");
                 } else {
                     System.out.println("  [unknown skill requested: " + m.group(1) + "]");
                 }
@@ -109,9 +121,9 @@ public class HealthAssistant {
         history.add(Message.getMessage(ChatRole.ASSISTANT,answer));
     }
 
-    private boolean activate(Skill skill) {
+    private boolean activate(Skill skill,String reason) {
         if (activeSkills.putIfAbsent(skill.name(), skill) == null) {
-            System.out.println("  [skill activated: " + skill.name() + " (" + "requested by model" + ")]");
+            System.out.println("  [skill activated: " + skill.name() + " (" + reason + ")]");
             return true;
         }
         return false;
@@ -134,10 +146,10 @@ public class HealthAssistant {
         }
         return  sb.toString();
     }
-    private void printRetrieved(List<SearchResult> results) {
+    private void printRetrieved(List<SearchResult<DocumentChunkVector>> results) {
         System.out.println("  [retrieved]");
-        for (SearchResult r : results) {
-            System.out.printf("   %.3f  %s%n", r.score(), r.document().chunk().title());
+        for (SearchResult<DocumentChunkVector> r : results) {
+            System.out.printf("   %.3f  %s%n", r.score(), r.item().getChunk().title());
         }
     }
 }
