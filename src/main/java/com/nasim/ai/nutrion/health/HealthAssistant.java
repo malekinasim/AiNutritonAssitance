@@ -97,15 +97,10 @@ public class HealthAssistant {
         for (int round = 0; round <= MAX_SKILL_ROUNDS; round++) {
 
             List<Message> request = new ArrayList<>();
-            request.add(Message.getMessage(ChatRole.SYSTEM, buildSystemPrompt()));
+            request.add(Message.system(buildSystemPrompt()));
             request.addAll(history);
-            List<Message> toolMessages=activeTools.stream().map(
-                    toolDefinition ->
-                           new Message(ChatRole.TOOL, toolDefinition.getFunctionDefinition().execute(
 
-                           ) )
-            )
-            request.add(Message.getMessage(ChatRole.USER, augmented));
+            request.add(Message.user(augmented));
             Map<String, String> response = chatApi.chat(request, (List<ToolDefinition>) tools.values());
 
             answer=response.get("answer");
@@ -136,8 +131,8 @@ public class HealthAssistant {
     }
 
     private void remember(String question, String answer) {
-        history.add(Message.getMessage(ChatRole.USER,question));
-        history.add(Message.getMessage(ChatRole.ASSISTANT,answer));
+        history.add(Message.user(question));
+        history.add(Message.assistant(answer));
     }
 
     private boolean activate(Skill skill,String reason) {

@@ -3,10 +3,8 @@ package com.nasim.ai.nutrion.ai_api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nasim.ai.nutrion.tools.FunctionDefinition;
 import com.nasim.ai.nutrion.tools.ToolDefinition;
 
-import javax.tools.Tool;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -48,10 +46,10 @@ public class AiChatAPI {
             HttpResponse<String> response =
                     httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                return  response.body();
+                return Map.of("answer",response.body());
             }
-            return Map.of("answer",extractResponse(response.body()),"tools"
-                    extractTools(response.body()));
+            return Map.of("answer",extractResponse(response.body()),
+                    "tool_calls", extractToolCalls(response.body()));
         } catch (IOException e) {
             e.printStackTrace();
             throw new Exception("Could not connect to the AI model: " + e.getMessage());
@@ -65,8 +63,8 @@ public class AiChatAPI {
         JsonNode json = mapper.readTree(body);
         return json.path("message").path("content").asText();
     }
-    private String extractTools(String body) throws JsonProcessingException {
+    private String extractToolCalls(String body) throws JsonProcessingException {
         JsonNode json = mapper.readTree(body);
-        return json.path("message").path("tools").asText();
+        return json.path("message").path("tool_calls").asText();
     }
 }
