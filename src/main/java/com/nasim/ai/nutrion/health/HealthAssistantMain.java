@@ -22,7 +22,12 @@ public class HealthAssistantMain {
             String input = scanner.nextLine();
             if (input.equalsIgnoreCase("exit")) break;
 
-            System.out.println("AI: " + assistant.ask(input));
+            try {
+                System.out.println("AI: " + assistant.ask(input));
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                break;
+            }
         }
     }
 }

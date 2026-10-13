@@ -1,10 +1,10 @@
 package com.nasim.ai.nutrion.skills;
 
-import com.nasim.ai.nutrion.util.Vector;
+import com.nasim.ai.nutrion.util.VectorEntry;
 
- public class SkillVector extends Vector {
+ public class SkillVectorEntry extends VectorEntry {
     private final Skill skill;
-     public SkillVector(double[] vector, Skill skill) {
+     public SkillVectorEntry(double[] vector, Skill skill) {
          super(vector);
          this.skill=skill;
      }

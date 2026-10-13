@@ -1,12 +1,12 @@
 package com.nasim.ai.nutrion.rag;
 
-import com.nasim.ai.nutrion.util.Vector;
+import com.nasim.ai.nutrion.util.VectorEntry;
 
-public class DocumentChunkVector extends Vector {
+public class DocumentChunkVectorEntry extends VectorEntry {
     private final DocumentChunk documentChunk;
 
 
-    public DocumentChunkVector(double[] vector, DocumentChunk documentChunk) {
+    public DocumentChunkVectorEntry(double[] vector, DocumentChunk documentChunk) {
         super(vector);
         this.documentChunk = documentChunk;
     }

@@ -12,25 +12,23 @@ public class SkillRouter {
 
 
     private final EmbeddingAPI embeddingApi;
-    private final VectorStore<SkillVector> entries;
+    private final VectorStore<SkillVectorEntry> entries;
 
 
 
     public SkillRouter(EmbeddingAPI embeddingApi, Map<String, Skill> skills, double threshold) {
         this.embeddingApi = embeddingApi;
 
-        var type=VectorStore.Type.THRESHOLD;
-        type.setValue(threshold);
-        this.entries = new VectorStore<>(type);
+        this.entries = new VectorStore<>(new VectorStore.Type(VectorStore.SearchType.THRESHOLD,threshold));
 
         List<Skill> list = new ArrayList<>(skills.values());
         List<double[]> vectors = embeddingApi.embedAll(list.stream().map(Skill::description).toList());
         for (int i = 0; i < list.size(); i++) {
-            entries.add(new SkillVector( vectors.get(i),list.get(i)));
+            entries.add(new SkillVectorEntry( vectors.get(i),list.get(i)));
         }
     }
 
-    public List<SearchResult<SkillVector>> match(String userMessage) {
+    public List<SearchResult<SkillVectorEntry>> match(String userMessage) {
         double[] query = embeddingApi.embed(userMessage);
         return entries.search(query);
     }

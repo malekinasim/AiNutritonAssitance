@@ -1,9 +1,9 @@
 package com.nasim.ai.nutrion.util;
 
-public class Vector {
+public class VectorEntry {
     private final double[] vector;
 
-    public Vector(double[] vector) {
+    public VectorEntry(double[] vector) {
         this.vector = vector;
     }
 

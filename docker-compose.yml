@@ -15,7 +15,7 @@ services:
     stdin_open: true
     tty: true
     environment:
-      AI_BASE_URL: http://ollama:11434
+      AI_BASE_URL: http://ollama-health-ai:11434
       AI_MODEL: llama3.2
 volumes:
   ollama-health-ai:

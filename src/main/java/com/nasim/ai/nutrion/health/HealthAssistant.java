@@ -8,7 +8,7 @@ import com.nasim.ai.nutrion.rag.*;
 import com.nasim.ai.nutrion.skills.Skill;
 import com.nasim.ai.nutrion.skills.SkillLoader;
 import com.nasim.ai.nutrion.skills.SkillRouter;
-import com.nasim.ai.nutrion.skills.SkillVector;
+import com.nasim.ai.nutrion.skills.SkillVectorEntry;
 import com.nasim.ai.nutrion.util.SearchResult;
 import com.nasim.ai.nutrion.util.VectorStore;
 
@@ -41,7 +41,7 @@ public class HealthAssistant {
     private final List<Message> history = new ArrayList<>();
     private final AiChatAPI chatApi;
     private final EmbeddingAPI embeddingApi;
-    private final VectorStore<DocumentChunkVector> documentVectorStore;
+    private final VectorStore<DocumentChunkVectorEntry> documentVectorStore;
     private Map<String, Skill> skills = Map.of();
     private SkillRouter router;
     private final Map<String, Skill> activeSkills = new LinkedHashMap<>();
@@ -49,9 +49,7 @@ public class HealthAssistant {
     public HealthAssistant(AiChatAPI chatApi, EmbeddingAPI embeddingApi,int topK) {
         this.chatApi = chatApi;
         this.embeddingApi = embeddingApi;
-        var type=VectorStore.Type.TOP;
-        type.setValue((double) topK);
-       this.documentVectorStore= new VectorStore<>(type);
+       this.documentVectorStore= new VectorStore<>(new VectorStore.Type(VectorStore.SearchType.TOP, (double) topK));
     }
 
     public void indexDocument(String ... documentsPaths) {
@@ -59,7 +57,7 @@ public class HealthAssistant {
             List<DocumentChunk> documentChunks = DocumentLoader.loadFromClasspath(documentsPath);
             documentChunks.forEach(c->{
                         double[] vector = embeddingApi.embed(c.title()+":"+c.text());
-                        documentVectorStore.add(new DocumentChunkVector( vector,c));
+                        documentVectorStore.add(new DocumentChunkVectorEntry( vector,c));
                     });
         }
     }
@@ -74,15 +72,15 @@ public class HealthAssistant {
 
     public int skillCount() {return skills.size(); }
 
-    public String ask(String question) {
+    public String ask(String question) throws Exception {
         //Skill Matcher
         if (router != null) {
-            for (SearchResult<SkillVector> m : router.match(question)) {
+            for (SearchResult<SkillVectorEntry> m : router.match(question)) {
                 activate(m.item().getSkill(), String.format("router, score %.3f", m.score()));
             }
         }
         //RAG
-        List<SearchResult<DocumentChunkVector>> results = documentVectorStore.search(embeddingApi.embed(question));
+        List<SearchResult<DocumentChunkVectorEntry>> results = documentVectorStore.search(embeddingApi.embed(question));
         printRetrieved(results);
 
         String sources = results.stream()
@@ -107,8 +105,8 @@ public class HealthAssistant {
                 } else {
                     System.out.println("  [unknown skill requested: " + m.group(1) + "]");
                 }
-                if (!loadedNew) break;
             }
+            if (!loadedNew) break;
         }
 
         answer = LOAD_SKILL.matcher(answer).replaceAll("").strip();
@@ -146,9 +144,9 @@ public class HealthAssistant {
         }
         return  sb.toString();
     }
-    private void printRetrieved(List<SearchResult<DocumentChunkVector>> results) {
+    private void printRetrieved(List<SearchResult<DocumentChunkVectorEntry>> results) {
         System.out.println("  [retrieved]");
-        for (SearchResult<DocumentChunkVector> r : results) {
+        for (SearchResult<DocumentChunkVectorEntry> r : results) {
             System.out.printf("   %.3f  %s%n", r.score(), r.item().getChunk().title());
         }
     }

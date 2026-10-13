@@ -31,7 +31,7 @@ public class Utils {
     }
 
     public static String read(String path){
-        try (InputStream in = DocumentLoader.class.getResourceAsStream(path)) {
+        try (InputStream in = Utils.class.getResourceAsStream(path)) {
             if (in == null) {
                 throw new IllegalStateException("File not found on classpath: " + path);
             }

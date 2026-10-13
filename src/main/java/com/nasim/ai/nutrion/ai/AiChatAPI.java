@@ -24,7 +24,7 @@ public class AiChatAPI {
         this.model = System.getenv().getOrDefault("AI_MODEL", "qwen2.5:3b");
 
     }
-    public String chat(List<Message> messages) {
+    public String chat(List<Message> messages) throws Exception {
         Map<String, Object>  requestBody = Map.of(
                 "model",this.model,
                 "messages", messages,
@@ -32,7 +32,7 @@ public class AiChatAPI {
         );
          return callPrompt(requestBody);
     }
-    public String callPrompt(Map<String, Object>  requestBody) {
+    public String callPrompt(Map<String, Object>  requestBody) throws Exception {
         try {
 
             HttpRequest request = HttpRequest.newBuilder()
@@ -45,15 +45,15 @@ public class AiChatAPI {
             HttpResponse<String> response =
                     httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
-                return "AI error " + response.statusCode() + ": " + response.body();
+                return  response.body();
             }
             return extractResponse(response.body());
         } catch (IOException e) {
             e.printStackTrace();
-            return "Could not connect to the AI model: " + e.getMessage();
+            throw new Exception("Could not connect to the AI model: " + e.getMessage());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return "The AI request was interrupted.";
+            throw new Exception( "The AI request was interrupted."+e.getMessage());
         }
     }
 
