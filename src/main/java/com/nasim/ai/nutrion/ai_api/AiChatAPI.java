@@ -23,7 +23,6 @@ public class AiChatAPI {
     public AiChatAPI() {
         this.baseUrl = System.getenv().getOrDefault("AI_BASE_URL", "http://localhost:11434");
         this.model = System.getenv().getOrDefault("AI_MODEL", "qwen2.5:3b");
-
     }
     public String chat(List<Message> messages) throws Exception {
         Map<String, Object>  requestBody = Map.of(
